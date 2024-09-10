@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">KeepUp</string>
+    <string name="register_now_string">Register now</string>
+    <string name="name_string">name</string>
+    <string name="phone_number_string">Phone Number</string>
+    <string name="loading_content_string">Hey %1$s\nThanks for registering\nPlease wait we are setting\nBest content for you</string>
+    <string name="background_string">Background</string>
+    <string name="congrats_string">Break the leg champ🏆!!!</string>
+    <string name="congrats_1_string">Congrats on completing the The 60-Day Coding Challenge</string>
+    <string name="additional_resources_string">"Additional Resources: "</string>
+    <string name="leetcode_string">LeetCode:</string>
+    <string name="system_design_primer_string">System Design Primer</string>
+    <string name="coding_interview_university_string">Coding Interview University:</string>
+    <string name="communication_skills_string">Communication Skills:</string>
+    <string name="dsa_playlist_string">DSA playlist:</string>
+    <string name="neetcode_channel_string">Neetcode channel:</string>
+    <string name="system_design_interview_by_freecodecamp_string">System design interview by freecodecamp:</string>
+    <string name="previous_task_string">Previous task</string>
+</resources>
