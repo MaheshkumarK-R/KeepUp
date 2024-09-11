@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.media.MediaPlayer
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -17,7 +18,11 @@ import com.mahikr.keepup.KeepUpApp
 import com.mahikr.keepup.MainActivity
 import com.mahikr.keepup.R
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 @AndroidEntryPoint
 class AppAlarmReceiver : BroadcastReceiver() {
@@ -59,25 +64,43 @@ class AppAlarmReceiver : BroadcastReceiver() {
                 setContentIntent(contentPendingIntent)
             }.build()
         }
+
+        private var mediaPlayer: MediaPlayer? = null
     }
 
     private val TAG = "AppAlarmReceiver_TAG"
-    private var mediaPlayer: MediaPlayer? = null
 
     override fun onReceive(context: Context, intent: Intent) {
 
         try {
             Log.d(TAG, "onReceive: ${intent.action}")
+            intent.action?.let { action ->
+                if (Intent.ACTION_BOOT_COMPLETED == action || Intent.ACTION_LOCKED_BOOT_COMPLETED == action){
+                    CoroutineScope(Dispatchers.Default).launch {
+                        Log.d(TAG, "onReceive: ${intent.action}")
+                        withContext(Dispatchers.Main)
+                        {
+                            Toast.makeText(context, "ACTION_BOOT_COMPLETED/ACTION_LOCKED_BOOT_COMPLETED", Toast.LENGTH_SHORT).show()
+                        }
+                        //delay(3_000L)
+                        //getAlarmTime().onEach { Log.d(TAG, "onReceive: ${intent.action} and getAlarmTime time in millis: $it format alarm time ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(it)}") }.launchIn(this)
+                    }
+                }
+            }
             if (intent.hasExtra(REMAINDER)) {
 
                 Log.d(TAG, "onReceive: ${intent.action} >> ${intent.hasExtra(REMAINDER)}")
                 when (intent.action ?: "NA") {
                     DONE -> {
                         runBlocking {
-                            Log.d(TAG, "onReceive:DONE  ${mediaPlayer?.isPlaying}")
-                            mediaPlayer?.stop().also {
+                            Log.d(TAG, "onReceive:DONE mediaPlayer $mediaPlayer isPlaying ${mediaPlayer?.isPlaying}")
+                            mediaPlayer?.apply {
+                                stop()
+                                release()
+                            }.also {
                                 mediaPlayer = null
                             }
+                            Log.d(TAG, "onReceive:DONE mediaPlayer $mediaPlayer")
                             NotificationManagerCompat.from(context).cancel(NOTIFICATION_CODE)
                         }
                     }
@@ -90,11 +113,15 @@ class AppAlarmReceiver : BroadcastReceiver() {
                         ) {
                             NotificationManagerCompat.from(context)
                                 .notify(NOTIFICATION_CODE, context.buildNotification())
-                            if(mediaPlayer != null)
+                            if (mediaPlayer == null)
                                 mediaPlayer = MediaPlayer.create(context, R.raw.alarm_music)
                             mediaPlayer?.let { player ->
+                                Log.d(TAG, "onReceive:else mediaPlayer $mediaPlayer")
                                 player.setOnCompletionListener {
+                                    it.stop()
                                     it.release()
+                                }.also {
+                                    mediaPlayer = null
                                 }
                                 player.start()
                             }
@@ -103,7 +130,7 @@ class AppAlarmReceiver : BroadcastReceiver() {
                 }
 
             }
-        }catch (exception:Exception){
+        } catch (exception: Exception) {
             Log.d(TAG, "onReceive: ${exception.localizedMessage}")
             exception.printStackTrace()
         }
