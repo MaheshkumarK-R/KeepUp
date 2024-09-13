@@ -4,8 +4,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
-import com.mahikr.keepup.KeepUpApp.Companion.APP_LAUNCH_CODE
 import com.mahikr.keepup.MainActivity
+import com.mahikr.keepup.common.AppConstants.APP_LAUNCH_CODE
 
 fun Context.buildNotification(channelId: String, iconId:Int, contentTitle:String,contentText:String, isOnGoing:Boolean=false): NotificationCompat.Builder =
     NotificationCompat.Builder(this, channelId).apply {

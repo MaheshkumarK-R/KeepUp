@@ -39,6 +39,7 @@
             android:label="@string/app_name"
             android:theme="@style/Theme.KeepUp"
             android:launchMode="singleTask"
+            android:screenOrientation="portrait"
             tools:ignore="RedundantLabel">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

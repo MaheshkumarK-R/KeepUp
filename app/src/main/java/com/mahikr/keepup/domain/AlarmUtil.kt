@@ -5,10 +5,12 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.mahikr.keepup.common.AppConstants.REMAINDER
+import com.mahikr.keepup.common.AppConstants.REMAINDER_CODE
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-const val REMAINDER = "remainder"
+
 private const val TAG = "AlarmUtil_TAG"
 
 fun Context.setUpAlarm(timeInMillis:Long) {
@@ -22,7 +24,7 @@ fun Context.setUpAlarm(timeInMillis:Long) {
 
     val pendingIntent = PendingIntent.getBroadcast(
         this,
-        301,
+        REMAINDER_CODE,
         intent,
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
     )
@@ -46,7 +48,7 @@ fun Context.cancelAlarm() {
     Log.d(TAG, "cancelAlarm: ${intent.hasExtra(REMAINDER)}")
     val pendingIntent = PendingIntent.getBroadcast(
         this,
-        301,
+        REMAINDER_CODE,
         intent,
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
     )
@@ -71,7 +73,7 @@ fun Context.setupPeriodicAlarm(timeInMillis:Long) {
     Log.d(TAG, "setupPeriodicAlarm: ${intent.hasExtra(REMAINDER)} to $timeInMillis  ${formatTime.format(timeInMillis)}")
     val pendingIntent = PendingIntent.getBroadcast(
         this,
-        301,
+        REMAINDER_CODE,
         intent,
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
     )
