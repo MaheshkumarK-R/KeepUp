@@ -126,7 +126,7 @@ class AppAlarmReceiver : BroadcastReceiver() {
                             ) {
                                 Log.d(TAG, "POST_NOTIFICATIONS:PERMISSION_GRANTED")
                                 NotificationManagerCompat.from(context).notify(
-                                    402, context.buildNotification(
+                                    NOTIFICATION_CODE, context.buildNotification(
                                         channelId = CHANNEL,
                                         iconId = R.drawable.login_background,
                                         contentTitle = "Skill up time",
