@@ -5,25 +5,12 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
-import android.util.Log
-import com.mahikr.keepup.domain.store.usecase.GetAlarmTime
+import com.mahikr.keepup.common.AppConstants.CHANNEL
+import com.mahikr.keepup.common.AppConstants.NAME
 import dagger.hilt.android.HiltAndroidApp
-import javax.inject.Inject
 
 @HiltAndroidApp
 class KeepUpApp : Application() {
-    companion object {
-        const val CHANNEL = "channel"
-        const val NAME = "Skill-Up Remainder"
-        const val APP_LAUNCH_CODE = 987
-    }
-
-    @Inject
-    lateinit var getAlarmTime: GetAlarmTime
-
-    init {
-        Log.d("KeepUpApp_TAG", " init : ")
-    }
 
     override fun onCreate() {
         super.onCreate()

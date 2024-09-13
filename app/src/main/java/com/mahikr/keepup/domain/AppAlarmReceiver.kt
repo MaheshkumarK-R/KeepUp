@@ -1,7 +1,6 @@
 package com.mahikr.keepup.domain
 
 import android.Manifest
-import android.app.Notification
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -10,12 +9,14 @@ import android.content.pm.PackageManager
 import android.media.MediaPlayer
 import android.os.Build
 import android.util.Log
-import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import com.mahikr.keepup.KeepUpApp
-import com.mahikr.keepup.MainActivity
 import com.mahikr.keepup.R
+import com.mahikr.keepup.common.AppConstants.CHANNEL
+import com.mahikr.keepup.common.AppConstants.DONE
+import com.mahikr.keepup.common.AppConstants.DONE_CODE
+import com.mahikr.keepup.common.AppConstants.NOTIFICATION_CODE
+import com.mahikr.keepup.common.AppConstants.REMAINDER
 import com.mahikr.keepup.domain.store.usecase.GetAlarmTime
 import com.mahikr.keepup.domain.store.usecase.SetAlarmTime
 import dagger.hilt.android.AndroidEntryPoint
@@ -44,44 +45,11 @@ class AppAlarmReceiver : BroadcastReceiver() {
     lateinit var setAlarmTime: SetAlarmTime
 
     companion object {
-        const val DONE = "done"
-        const val REJECT = "reject"
-        const val REMAINDER = "remainder"
-        const val NOTIFICATION_CODE = 402
-        private const val DONE_CODE = 302
-
         private var nextAlarmTime: Long = 0L
         private var previousAlarmTime: Long = 0L
-
-        private fun Context.buildNotification(): Notification {
-            val donePendingIntent = PendingIntent.getBroadcast(
-                this, DONE_CODE, Intent(this, AppAlarmReceiver::class.java).apply {
-                    action = DONE
-                    putExtra(REMAINDER, DONE)
-                }, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-
-            val contentPendingIntent = PendingIntent.getActivity(
-                this, 987, Intent(this, MainActivity::class.java).apply {
-                    action = Intent.ACTION_MAIN
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                }, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-
-            return NotificationCompat.Builder(this, KeepUpApp.CHANNEL).apply {
-                setSmallIcon(R.drawable.ic_schedule)
-                setContentTitle("Skill up time")
-                setContentText("Hey mate, It's time for you to grow your-self")
-                addAction(R.drawable.ic_check, "Ok", donePendingIntent)
-                setOngoing(true)
-                setContentIntent(contentPendingIntent)
-            }.build()
-        }
-
         private var mediaPlayer: MediaPlayer? = null
+        private val TAG = "AppAlarmReceiver_TAG"
     }
-
-    private val TAG = "AppAlarmReceiver_TAG"
 
     override fun onReceive(context: Context, intent: Intent) {
 
@@ -157,19 +125,19 @@ class AppAlarmReceiver : BroadcastReceiver() {
                                 ) == PackageManager.PERMISSION_GRANTED
                             ) {
                                 Log.d(TAG, "POST_NOTIFICATIONS:PERMISSION_GRANTED")
-                                /*NotificationManagerCompat.from(context).notify(
+                                NotificationManagerCompat.from(context).notify(
                                     402, context.buildNotification(
                                         channelId = CHANNEL,
                                         iconId = R.drawable.login_background,
                                         contentTitle = "Skill up time",
                                         contentText = "Hey mate, It's time for you to grow your-self"
                                     ).build()
-                                )*/
+                                )
                             } else Log.d(TAG, "BOOT-UP POST_NOTIFICATIONS:!PERMISSION_GRANTED")
 
                         } else {
                             Log.d(TAG, "BOOT-UP: reschedule alarm")
-                            //context.setupPeriodicAlarm(alarmTime)
+                            context.setupPeriodicAlarm(alarmTime)
                         }
                     }.launchIn(CoroutineScope(Dispatchers.Default + coroutineExceptionHandler))
 
@@ -203,7 +171,7 @@ class AppAlarmReceiver : BroadcastReceiver() {
                         ) {
                             NotificationManagerCompat.from(context).notify(
                                 NOTIFICATION_CODE, context.buildNotification(
-                                    channelId = KeepUpApp.CHANNEL,
+                                    channelId = CHANNEL,
                                     iconId = R.drawable.login_background,
                                     contentTitle = "Skill up time",
                                     contentText = "Hey mate, It's time for you to grow your-self"
