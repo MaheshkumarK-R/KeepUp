@@ -12,8 +12,8 @@ import com.mahikr.keepup.domain.store.usecase.GetDayId
 import com.mahikr.keepup.domain.store.usecase.GetName
 import com.mahikr.keepup.domain.store.usecase.SetAlarmTime
 import com.mahikr.keepup.domain.store.usecase.SetDayId
-import com.mahikr.keepup.ui.presentation.screen.MainScreenEvent
 import com.mahikr.keepup.ui.presentation.state.LoadingComponentState
+import com.mahikr.keepup.ui.presentation.state.MainScreenEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow

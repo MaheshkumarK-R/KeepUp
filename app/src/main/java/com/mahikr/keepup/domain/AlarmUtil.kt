@@ -18,7 +18,7 @@ fun Context.setUpAlarm(timeInMillis:Long) {
     }
 
     val formatTime = SimpleDateFormat("hh:mm a", Locale.getDefault())
-    Log.d(TAG, "setupPeriodicAlarm: ${intent.hasExtra(REMAINDER)} to $timeInMillis  ${formatTime.format(timeInMillis)}")
+    Log.d(TAG, "setUpAlarm: ${intent.hasExtra(REMAINDER)} to $timeInMillis  ${formatTime.format(timeInMillis)}")
 
     val pendingIntent = PendingIntent.getBroadcast(
         this,
@@ -79,7 +79,9 @@ fun Context.setupPeriodicAlarm(timeInMillis:Long) {
     val alarmMgr = getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
     try {
+        //alarmMgr.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent)
         val interval = 2L * 60L * 1000L
+        setUpAlarm(timeInMillis)
         alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP, timeInMillis,interval,pendingIntent)
     }catch (exception:SecurityException){
         exception.printStackTrace()

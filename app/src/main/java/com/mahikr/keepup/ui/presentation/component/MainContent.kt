@@ -18,8 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.mahikr.keepup.R
-import com.mahikr.keepup.ui.presentation.screen.BulletText
-import com.mahikr.keepup.ui.presentation.screen.HyperLinkText
 import com.mahikr.keepup.ui.presentation.screen.Topic
 
 @Composable
