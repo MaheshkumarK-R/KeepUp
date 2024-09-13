@@ -81,9 +81,9 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:$nav_version")
 
     //hilt
-    implementation ("com.google.dagger:hilt-android:2.50")
-    annotationProcessor ("com.google.dagger:hilt-compiler:2.50")
-    kapt ("com.google.dagger:hilt-compiler:2.50")
+    implementation ("com.google.dagger:hilt-android:2.51.1")
+    annotationProcessor ("com.google.dagger:hilt-compiler:2.51.1")
+    kapt ("com.google.dagger:hilt-compiler:2.51.1")
     implementation ("androidx.hilt:hilt-navigation-compose:1.2.0") //hiltViewModel
 
     //Datastore
@@ -93,6 +93,8 @@ dependencies {
     implementation("io.realm.kotlin:library-base:1.11.0")
 
     implementation("androidx.compose.material:material-icons-extended-android:1.7.0")
+    //Permission
+    implementation("com.google.accompanist:accompanist-permissions:0.33.0-alpha")
 }
 
 kapt {
