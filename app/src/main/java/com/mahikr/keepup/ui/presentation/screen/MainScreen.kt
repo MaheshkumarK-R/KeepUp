@@ -65,6 +65,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.mahikr.keepup.R
+import com.mahikr.keepup.common.AppConstants
 import com.mahikr.keepup.domain.cancelAlarm
 import com.mahikr.keepup.domain.setupPeriodicAlarm
 import com.mahikr.keepup.ui.presentation.component.LoadingComponent
@@ -110,6 +111,7 @@ fun MainScreen(mainVm: MainVm = hiltViewModel(), onNavigate: () -> Unit) {
         if (onNavigateFlow) {
             context.cancelAlarm()
             mainVm.onSaveAlarmTime(0L)
+            mainVm.moveToAcknowledgmentScreen()
             onNavigate()
         }
     })
@@ -245,7 +247,7 @@ fun MainScreen(mainVm: MainVm = hiltViewModel(), onNavigate: () -> Unit) {
                         when (val state = loadingState) {
                             LoadingComponentState.Idle -> {
                                 MainContent(
-                                    dayIndex = taskInfo.dayIndex,
+                                    dayIndex = taskInfo.dayIndex.toLong(),
                                     title = taskInfo.title,
                                     leetCodeQuestions = taskInfo.leetCodeQuestions,
                                     systemDesignTopic = taskInfo.systemDesignTopic,
@@ -255,14 +257,15 @@ fun MainScreen(mainVm: MainVm = hiltViewModel(), onNavigate: () -> Unit) {
 
                                 Button(
                                     onClick = {
-                                        mainVm.onMainEvent(MainScreenEvent.OnTaskComplete)
+                                        if(currentDayIndexState > AppConstants.TASK_COUNT) onNavigate()
+                                        else mainVm.onMainEvent(MainScreenEvent.OnTaskComplete)
                                     },
                                     modifier = Modifier
                                         .padding(horizontal = 20.dp)
                                         .fillParentMaxWidth(0.85f)
                                         .clip(MaterialTheme.shapes.medium)
                                 ) {
-                                    Text(text = "Task completed")
+                                    Text(text = if(currentDayIndexState > AppConstants.TASK_COUNT) "Accomplishment Screen" else "Task completed")
                                 }
 
 

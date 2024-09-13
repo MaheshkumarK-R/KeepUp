@@ -1,6 +1,7 @@
 package com.mahikr.keepup.common
 
 object AppConstants {
+    const val TASK_COUNT = 40
     const val CHANNEL = "channel"
     const val NAME = "Skill-Up Remainder"
     const val DONE = "done"
