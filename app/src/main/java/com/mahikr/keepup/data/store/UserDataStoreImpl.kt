@@ -1,5 +1,6 @@
 package com.mahikr.keepup.data.store
 
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
@@ -13,6 +14,8 @@ import com.mahikr.keepup.domain.store.UserDataStore.Companion.USER_NUMBER_KEY
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import java.text.SimpleDateFormat
+import java.util.Locale
 import javax.inject.Inject
 
 class UserDataStoreImpl @Inject constructor(private val dataStore: DataStore<Preferences>): UserDataStore {
@@ -55,6 +58,12 @@ class UserDataStoreImpl @Inject constructor(private val dataStore: DataStore<Pre
     override suspend fun saveAlarmTime(alarmTimeInMillis: Long) {
         dataStore.edit { mutablePreferences: MutablePreferences ->
             mutablePreferences[ALARM_KEY] = alarmTimeInMillis
+        }.also { preferences ->
+            preferences[ALARM_KEY].also {
+                it?.let {num ->
+                    Log.d("TAG_i", "AlarmReceiver: ACTUAL DB $num ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(num)}")
+                }
+            }
         }
     }
 }

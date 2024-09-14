@@ -12,6 +12,7 @@ import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.mahikr.keepup.R
+import com.mahikr.keepup.common.AppConstants.ALARM_INTERVAL
 import com.mahikr.keepup.common.AppConstants.CHANNEL
 import com.mahikr.keepup.common.AppConstants.DONE
 import com.mahikr.keepup.common.AppConstants.DONE_CODE
@@ -20,6 +21,7 @@ import com.mahikr.keepup.common.AppConstants.REMAINDER
 import com.mahikr.keepup.domain.store.usecase.GetAlarmTime
 import com.mahikr.keepup.domain.store.usecase.SetAlarmTime
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,7 +34,6 @@ import kotlinx.coroutines.runBlocking
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import java.util.concurrent.CancellationException
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -58,29 +59,6 @@ class AppAlarmReceiver : BroadcastReceiver() {
             intent.action?.let { action ->
                 if (Intent.ACTION_BOOT_COMPLETED == action || Intent.ACTION_LOCKED_BOOT_COMPLETED == action) {
                     Log.d(TAG, "onReceive: ${intent.action}")
-                    /*CoroutineScope(Dispatchers.Default).launch {
-                        Log.d(TAG, "onReceive: ${intent.action}")
-                        withContext(Dispatchers.Main) {
-                            Toast.makeText(
-                                context,
-                                "ACTION_BOOT_COMPLETED/ACTION_LOCKED_BOOT_COMPLETED",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                        //delay(3_000L)
-                        getAlarmTime().onEach {
-                            Log.d(
-                                TAG,
-                                "onReceive: ${intent.action} and getAlarmTime time in millis: $it format alarm time ${
-                                    SimpleDateFormat(
-                                        "hh:mm a",
-                                        Locale.getDefault()
-                                    ).format(it)
-                                }"
-                            )
-                        }.launchIn(this)
-                    }*/
-
                     val coroutineExceptionHandler =
                         CoroutineExceptionHandler { _, throwable ->
                             Log.d(
@@ -88,56 +66,36 @@ class AppAlarmReceiver : BroadcastReceiver() {
                                 "APP BOOT-UP: coroutineExceptionHandler: ${throwable.localizedMessage}  ${throwable.stackTrace}"
                             )
                         }
-                    getAlarmTime().onEach { alarmTime ->
-                        Log.d(
-                            TAG,
-                            "BOOT-UP: getAlarmTime time in millis: $alarmTime format alarm time ${
-                                SimpleDateFormat(
-                                    "hh:mm a",
-                                    Locale.getDefault()
-                                ).format(alarmTime)
-                            }"
-                        )
+                    CoroutineScope(Dispatchers.Default + coroutineExceptionHandler).launch {
+                        getAlarmTime().collectLatest {
+                            Log.d(TAG, "BOOT-UP DB time collectLatest: $it format alarm time ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(it)}")
+                        }
+                    }
+                    getAlarmTime().onEach { dbTime -> Log.d(TAG, "BOOT-UP: DB time in millis: $dbTime format alarm time ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(dbTime)}")
+                        if(dbTime != 0L){
+                            val currentTime = Calendar.getInstance().timeInMillis
+                            Log.d(TAG, "BOOT-UP Calendar time in millis: $currentTime format alarm time ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(currentTime)}")
+                            if (currentTime > dbTime) {
+                                Log.d(TAG, "BOOT-UP APP init:KeepUpApp alarm missed @${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(dbTime)}")
+                                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || ContextCompat.checkSelfPermission(
+                                        context,
+                                        Manifest.permission.POST_NOTIFICATIONS
+                                    ) == PackageManager.PERMISSION_GRANTED
+                                ) {
+                                    Log.d(TAG, "POST_NOTIFICATIONS:PERMISSION_GRANTED")
+                                    NotificationManagerCompat.from(context).notify(
+                                        NOTIFICATION_CODE, context.buildNotification(
+                                            channelId = CHANNEL,
+                                            iconId = R.drawable.login_background,
+                                            contentTitle = "Skill up time",
+                                            contentText = "Hey mate, there is a missed skill up alert @$dbTime"
+                                        ).build()
+                                    )
+                                } else Log.d(TAG, "BOOT-UP POST_NOTIFICATIONS:!PERMISSION_GRANTED")
 
-                        val currentTime = Calendar.getInstance().timeInMillis
-                        Log.d(
-                            TAG,
-                            "BOOT-UP getAlarmTime time in millis: $currentTime format alarm time ${
-                                SimpleDateFormat(
-                                    "hh:mm a",
-                                    Locale.getDefault()
-                                ).format(currentTime)
-                            }"
-                        )
-                        if (currentTime > alarmTime) {
-                            Log.d(
-                                TAG,
-                                "BOOT-UP APP init:KeepUpApp alarm missed @${
-                                    SimpleDateFormat(
-                                        "hh:mm a",
-                                        Locale.getDefault()
-                                    ).format(alarmTime)
-                                }"
-                            )
-                            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || ContextCompat.checkSelfPermission(
-                                    context,
-                                    Manifest.permission.POST_NOTIFICATIONS
-                                ) == PackageManager.PERMISSION_GRANTED
-                            ) {
-                                Log.d(TAG, "POST_NOTIFICATIONS:PERMISSION_GRANTED")
-                                NotificationManagerCompat.from(context).notify(
-                                    NOTIFICATION_CODE, context.buildNotification(
-                                        channelId = CHANNEL,
-                                        iconId = R.drawable.login_background,
-                                        contentTitle = "Skill up time",
-                                        contentText = "Hey mate, It's time for you to grow your-self"
-                                    ).build()
-                                )
-                            } else Log.d(TAG, "BOOT-UP POST_NOTIFICATIONS:!PERMISSION_GRANTED")
-
-                        } else {
+                            }
                             Log.d(TAG, "BOOT-UP: reschedule alarm")
-                            context.setupPeriodicAlarm(alarmTime)
+                            context.setupPeriodicAlarm(dbTime)
                         }
                     }.launchIn(CoroutineScope(Dispatchers.Default + coroutineExceptionHandler))
 
@@ -169,6 +127,7 @@ class AppAlarmReceiver : BroadcastReceiver() {
                                 context, Manifest.permission.POST_NOTIFICATIONS
                             ) == PackageManager.PERMISSION_GRANTED
                         ) {
+                            Log.d(TAG, "onReceive: ${intent.getStringExtra(REMAINDER)}")
                             NotificationManagerCompat.from(context).notify(
                                 NOTIFICATION_CODE, context.buildNotification(
                                     channelId = CHANNEL,
@@ -176,9 +135,7 @@ class AppAlarmReceiver : BroadcastReceiver() {
                                     contentTitle = "Skill up time",
                                     contentText = "Hey mate, It's time for you to grow your-self"
                                 ).addAction(
-                                    R.drawable.ic_check, "Ok", PendingIntent.getBroadcast(
-                                        context,
-                                        DONE_CODE,
+                                    R.drawable.ic_check, "Ok", PendingIntent.getBroadcast(context, DONE_CODE,
                                         Intent(context, AppAlarmReceiver::class.java).apply {
                                             action = DONE
                                             putExtra(REMAINDER, DONE)
@@ -201,62 +158,38 @@ class AppAlarmReceiver : BroadcastReceiver() {
                             }
 
                             val currentTime = Calendar.getInstance().timeInMillis
-                            Log.d(
-                                TAG,
-                                "AlarmReceiver: currentTime time in millis: $currentTime format alarm time ${
-                                    SimpleDateFormat("hh:mm a", Locale.getDefault()).format(
-                                        currentTime
-                                    )
-                                }"
-                            )
-                            Log.d(
-                                TAG,
-                                "AlarmReceiver: nextAlarm time in millis: ${currentTime.plus(2L * 60L * 1000L)}" + " format alarm time ${
-                                    SimpleDateFormat(
-                                        "hh:mm a",
-                                        Locale.getDefault()
-                                    ).format(currentTime.plus(2L * 60L * 1000L))
-                                }"
-                            )
+                            Log.d(TAG, "AlarmReceiver: Calendar time in millis: $currentTime format alarm time ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(currentTime)}")
+                            Log.d(TAG, "AlarmReceiver: nextAlarmTime time in millis: $nextAlarmTime" + " format alarm time ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(nextAlarmTime)}")
+                            Log.d(TAG, "AlarmReceiver: previousAlarmTime time in millis: $previousAlarmTime" + " format alarm time ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(previousAlarmTime)}")
                             val coroutineExceptionHandler =
                                 CoroutineExceptionHandler { _, throwable ->
-                                    Log.d(
-                                        TAG,
-                                        "AlarmReceiver: coroutineExceptionHandler: ${throwable.localizedMessage}  ${throwable.stackTrace}"
-                                    )
+                                    Log.d(TAG, "AlarmReceiver: coroutineExceptionHandler: ${throwable.localizedMessage}  ${throwable.stackTrace}")
                                 }
                             val scope = CoroutineScope(Dispatchers.Default + coroutineExceptionHandler).launch {
                                 getAlarmTime().collectLatest {
-                                    if(nextAlarmTime != it.plus(2L * 60L * 1000L)) {
-                                        nextAlarmTime = it.plus(2L * 60L * 1000L)
+                                    Log.d(TAG, "AlarmReceiver:DB AlarmTime $it formatted time: ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(it)}")
+                                    if(it != 0L && nextAlarmTime != it+ALARM_INTERVAL) {
+                                        nextAlarmTime = it.plus(ALARM_INTERVAL)
                                     }
-                                    Log.d(TAG, "onReceive:collectLatest AlarmTime $it formatted time: ${SimpleDateFormat(
-                                        "hh:mm a",
-                                        Locale.getDefault()
-                                    ).format(it)}")
+                                    Log.d(TAG, "AlarmReceiver:In nextAlarmTime time in millis: $nextAlarmTime" + " format alarm time ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(nextAlarmTime)}")
+                                    Log.d(TAG, "AlarmReceiver:In previousAlarmTime time in millis: $previousAlarmTime" + " format alarm time ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(previousAlarmTime)}")
                                 }
                             }
                             CoroutineScope(Dispatchers.Default + coroutineExceptionHandler).launch {
                                 while (nextAlarmTime ==0L) {
-                                    delay(1500L)
+                                    delay(500L)
                                 }
+                                Log.d(TAG, "AlarmReceiver:POST nextAlarmTime time in millis: $nextAlarmTime" + " format alarm time ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(nextAlarmTime)}")
+                                Log.d(TAG, "AlarmReceiver:POST previousAlarmTime time in millis: $previousAlarmTime" + " format alarm time ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(previousAlarmTime)}")
                                 if(previousAlarmTime == 0L || previousAlarmTime != nextAlarmTime){
                                     setAlarmTime(nextAlarmTime)
                                     scope.cancel(CancellationException("close getAlarmTime scope"))
-                                    Log.d(TAG, "onReceive:previousAlarmTime != nextAlarmTime nextAlarmTime $nextAlarmTime formatted time: ${SimpleDateFormat(
-                                        "hh:mm a",
-                                        Locale.getDefault()
-                                    ).format(nextAlarmTime)}")
-                                    Log.d(TAG, "onReceive:previousAlarmTime != nextAlarmTime previousAlarmTime $previousAlarmTime formatted time: ${SimpleDateFormat(
-                                        "hh:mm a",
-                                        Locale.getDefault()
-                                    ).format(previousAlarmTime)}")
-                                    previousAlarmTime = nextAlarmTime
+                                    Log.d(TAG, "AlarmReceiver: Updated db with nextAlarmTime $nextAlarmTime formatted time: ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(nextAlarmTime)}")
                                     getAlarmTime().collectLatest {
-                                        Log.d(TAG, "onReceive:collectLatest AlarmTime $it formatted time: ${SimpleDateFormat(
-                                            "hh:mm a",
-                                            Locale.getDefault()
-                                        ).format(it)}")
+                                        Log.d(TAG, "AlarmReceiver:After DB updated DB time $it formatted time: ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(it)}")
+                                        previousAlarmTime = it
+                                        Log.d(TAG, "AlarmReceiver:After DB updated nextAlarmTime  $nextAlarmTime formatted time: ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(nextAlarmTime)}")
+                                        Log.d(TAG, "AlarmReceiver:After DB updated previousAlarmTime $previousAlarmTime formatted time: ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(previousAlarmTime)}")
                                     }
                                 }
                             }

@@ -1,7 +1,6 @@
 package com.mahikr.keepup.ui.vm
 
 import android.util.Log
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mahikr.keepup.common.AppConstants.TASK_COUNT
@@ -63,8 +62,9 @@ class MainVm @Inject constructor(
     private val _name: MutableStateFlow<String> = MutableStateFlow("")
     val name = _name.asStateFlow()
 
-    var alarmTime = mutableStateOf("")
-        private set
+    private val _alarmTime: MutableStateFlow<String> = MutableStateFlow("")
+    val alarmTime = _alarmTime.asStateFlow()
+
 
     private val onMoveToAcknowledgmentScreen = Channel<Boolean>()
     val onNavigateFlow = onMoveToAcknowledgmentScreen.receiveAsFlow()
@@ -75,11 +75,12 @@ class MainVm @Inject constructor(
         viewModelScope.launch(Dispatchers.Default) {
             Log.d(TAG, "init : entry")
             updateLoadingState(LoadingComponentState.Loading("Loading tasks"))
-            getAlarmTime().onEach {
-                Log.d(TAG, "init : getAlarmTime $it")
-                alarmTime.value =
-                    if (it == 0L) "Please set reading remainder"
-                    else SimpleDateFormat("hh:mm a", Locale.getDefault()).format(it).toString()
+            getAlarmTime().onEach { savedTime ->
+                Log.d(TAG, "init : getAlarmTime $savedTime in millis")
+                _alarmTime.updateAndGet { if (savedTime == 0L) "Please set reading remainder"
+                else SimpleDateFormat("hh:mm a", Locale.getDefault()).format(savedTime).toString() }.also {
+                    Log.d(TAG, "init : _alarmTime $it")
+                }
             }.launchIn(this)
             getDayId().zip(getName()) { userDay, userName ->
                 updateLoadingState(LoadingComponentState.Loading("Loading day $userDay task"))
@@ -203,10 +204,18 @@ class MainVm @Inject constructor(
     fun onSaveAlarmTime(alarmTimeInMillis: Long) = viewModelScope.launch(Dispatchers.Default) {
         Log.d(TAG, "onSaveAlarmTime: $alarmTimeInMillis")
         setAlarmTime(alarmTimeInMillis)
-        alarmTime.value =
-            if (alarmTimeInMillis == 0L) "Alarm been removed..." else SimpleDateFormat("hh:mm a", Locale.getDefault()).format(alarmTimeInMillis).toString()
-        Log.d(TAG, "onSaveAlarmTime : $alarmTimeInMillis  & ${alarmTime.value}")
+        _alarmTime.updateAndGet { if (alarmTimeInMillis == 0L) "Alarm been removed..." else SimpleDateFormat("hh:mm a", Locale.getDefault()).format(alarmTimeInMillis) }.also {
+            Log.d(TAG, "onSaveAlarmTime : $it ")
+        }
         moveToAcknowledgmentScreen()
+    }
+
+    fun saveAlarmTime(alarmTimeInMillis: Long) = viewModelScope.launch(Dispatchers.Default) {
+        Log.d(TAG, "saveAlarmTime: $alarmTimeInMillis")
+        setAlarmTime(alarmTimeInMillis)
+        _alarmTime.updateAndGet { if (alarmTimeInMillis == 0L) "Alarm been removed..." else SimpleDateFormat("hh:mm a", Locale.getDefault()).format(alarmTimeInMillis) }.also {
+            Log.d(TAG, "saveAlarmTime : $it")
+        }
     }
 
     private suspend fun moveIndexToNextDay() = withContext(Dispatchers.Default){

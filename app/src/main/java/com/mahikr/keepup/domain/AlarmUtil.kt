@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.mahikr.keepup.common.AppConstants.ALARM_INTERVAL
 import com.mahikr.keepup.common.AppConstants.REMAINDER
 import com.mahikr.keepup.common.AppConstants.REMAINDER_CODE
 import java.text.SimpleDateFormat
@@ -24,7 +25,7 @@ fun Context.setUpAlarm(timeInMillis:Long) {
 
     val pendingIntent = PendingIntent.getBroadcast(
         this,
-        REMAINDER_CODE,
+        303,
         intent,
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
     )
@@ -81,10 +82,8 @@ fun Context.setupPeriodicAlarm(timeInMillis:Long) {
     val alarmMgr = getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
     try {
-        //alarmMgr.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent)
-        val interval = 2L * 60L * 1000L
         setUpAlarm(timeInMillis)
-        alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP, timeInMillis,interval,pendingIntent)
+        alarmMgr.setRepeating(AlarmManager.RTC_WAKEUP, timeInMillis,ALARM_INTERVAL,pendingIntent)
     }catch (exception:SecurityException){
         exception.printStackTrace()
     }

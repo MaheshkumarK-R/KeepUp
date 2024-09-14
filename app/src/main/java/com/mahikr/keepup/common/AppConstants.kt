@@ -12,4 +12,6 @@ object AppConstants {
     const val DONE_CODE = 302
     const val REMAINDER_CODE = 301
     const val APP_LAUNCH_CODE = 987
+
+    const val ALARM_INTERVAL = 2L * 60L * 1000L
 }

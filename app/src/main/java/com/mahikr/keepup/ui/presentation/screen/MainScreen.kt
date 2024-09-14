@@ -105,7 +105,7 @@ fun MainScreen(mainVm: MainVm = hiltViewModel(), onNavigate: () -> Unit) {
 
     val name by mainVm.name.collectAsStateWithLifecycle(initialValue = "")
 
-    val alarmTime = mainVm.alarmTime.value
+    val alarmTime by mainVm.alarmTime.collectAsStateWithLifecycle(initialValue = "")
 
     val onNavigateFlow by mainVm.onNavigateFlow.collectAsStateWithLifecycle(initialValue = false)
     LaunchedEffect(key1 = onNavigateFlow, block = {
@@ -217,7 +217,7 @@ fun MainScreen(mainVm: MainVm = hiltViewModel(), onNavigate: () -> Unit) {
                                         "timeInMillis: ${calender.timeInMillis}"
                             )
                             //alarmTime = formatTime.format(calender.timeInMillis)
-                            mainVm.onSaveAlarmTime(calender.timeInMillis)
+                            mainVm.saveAlarmTime(calender.timeInMillis)
                             context.setupPeriodicAlarm(calender.timeInMillis)
                             isTimePickerVisible = false
                         },
