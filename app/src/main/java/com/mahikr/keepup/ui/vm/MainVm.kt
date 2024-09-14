@@ -60,8 +60,8 @@ class MainVm @Inject constructor(
     private val _taskInfo: MutableStateFlow<DomainTask> = MutableStateFlow(DomainTask())
     val taskInfo = _taskInfo.asStateFlow()
 
-    var name = mutableStateOf("")
-        private set
+    private val _name: MutableStateFlow<String> = MutableStateFlow("")
+    val name = _name.asStateFlow()
 
     var alarmTime = mutableStateOf("")
         private set
@@ -84,12 +84,12 @@ class MainVm @Inject constructor(
             getDayId().zip(getName()) { userDay, userName ->
                 updateLoadingState(LoadingComponentState.Loading("Loading day $userDay task"))
                 Log.d(TAG, "init userDay:$userDay => userName $userName")
-                name.value = userName
+                _name.update { userName }
                 _currentDayIndexState.updateAndGet { userDay }.also { dayIndex ->
                     Log.d(TAG, "_currentDayIndexState.updateAndGet : $dayIndex")
                     _dayIndexState.update { dayIndex }
                 }
-                Pair(name, userDay)
+                Pair(userName, userDay)
             }.collectLatest { stateIntPair ->
                 Log.d(TAG, "init userDay:${stateIntPair.second} => userName ${stateIntPair.first}")
                 if(stateIntPair.second > TASK_COUNT){
@@ -168,7 +168,6 @@ class MainVm @Inject constructor(
 
 
             MainScreenEvent.OnPreviousTask -> {
-
                 Log.d(TAG, "onMainEvent: OnPreviousTask pre dayIndex ${_dayIndexState.value} currentDayIndex ${_currentDayIndexState.value} ")
                 getTaskByID( async { moveIndexToPreviousDay() }.await() ).collectLatest {task ->
                     task?.let { domainTask ->
@@ -250,10 +249,7 @@ class MainVm @Inject constructor(
 
 
     private fun updateLoadingState(loadingComponentState: LoadingComponentState) {
-        Log.d(
-            TAG,
-            "updateLoadingState: loadingState to $loadingComponentState from ${_loadingState.value}"
-        )
+        Log.d(TAG, "updateLoadingState: loadingState to $loadingComponentState from ${_loadingState.value}")
         if (_loadingState.value != loadingComponentState)
             _loadingState.update { loadingComponentState }
     }

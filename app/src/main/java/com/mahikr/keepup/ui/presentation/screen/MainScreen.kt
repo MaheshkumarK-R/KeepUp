@@ -103,6 +103,8 @@ fun MainScreen(mainVm: MainVm = hiltViewModel(), onNavigate: () -> Unit) {
         SimpleDateFormat("hh:mm a", Locale.getDefault())
     }
 
+    val name by mainVm.name.collectAsStateWithLifecycle(initialValue = "")
+
     val alarmTime = mainVm.alarmTime.value
 
     val onNavigateFlow by mainVm.onNavigateFlow.collectAsStateWithLifecycle(initialValue = false)
@@ -177,7 +179,7 @@ fun MainScreen(mainVm: MainVm = hiltViewModel(), onNavigate: () -> Unit) {
 
                 DrawerItem(
                     imageVector = Icons.Outlined.Person,
-                    contentDescription = mainVm.name.value
+                    contentDescription = name
                 )
 
                 DrawerItem(
@@ -252,7 +254,7 @@ fun MainScreen(mainVm: MainVm = hiltViewModel(), onNavigate: () -> Unit) {
                                     leetCodeQuestions = taskInfo.leetCodeQuestions,
                                     systemDesignTopic = taskInfo.systemDesignTopic,
                                     communicationExercise = taskInfo.communicationExercise,
-                                    userName = mainVm.name.value
+                                    userName = name
                                 )
 
                                 Button(
