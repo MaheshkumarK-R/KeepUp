@@ -22,7 +22,7 @@ import com.mahikr.keepup.ui.presentation.screen.Topic
 
 @Composable
 fun MainContent(
-    dayIndex: Int,
+    dayIndex: Long,
     title: String,
     leetCodeQuestions: List<String>,
     systemDesignTopic: String,

@@ -65,6 +65,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.mahikr.keepup.R
+import com.mahikr.keepup.common.AppConstants
 import com.mahikr.keepup.domain.cancelAlarm
 import com.mahikr.keepup.domain.setupPeriodicAlarm
 import com.mahikr.keepup.ui.presentation.component.LoadingComponent
@@ -102,6 +103,8 @@ fun MainScreen(mainVm: MainVm = hiltViewModel(), onNavigate: () -> Unit) {
         SimpleDateFormat("hh:mm a", Locale.getDefault())
     }
 
+    val name by mainVm.name.collectAsStateWithLifecycle(initialValue = "")
+
     val alarmTime = mainVm.alarmTime.value
 
     val onNavigateFlow by mainVm.onNavigateFlow.collectAsStateWithLifecycle(initialValue = false)
@@ -110,6 +113,7 @@ fun MainScreen(mainVm: MainVm = hiltViewModel(), onNavigate: () -> Unit) {
         if (onNavigateFlow) {
             context.cancelAlarm()
             mainVm.onSaveAlarmTime(0L)
+            mainVm.moveToAcknowledgmentScreen()
             onNavigate()
         }
     })
@@ -175,7 +179,7 @@ fun MainScreen(mainVm: MainVm = hiltViewModel(), onNavigate: () -> Unit) {
 
                 DrawerItem(
                     imageVector = Icons.Outlined.Person,
-                    contentDescription = mainVm.name.value
+                    contentDescription = name
                 )
 
                 DrawerItem(
@@ -245,24 +249,25 @@ fun MainScreen(mainVm: MainVm = hiltViewModel(), onNavigate: () -> Unit) {
                         when (val state = loadingState) {
                             LoadingComponentState.Idle -> {
                                 MainContent(
-                                    dayIndex = taskInfo.dayIndex,
+                                    dayIndex = taskInfo.dayIndex.toLong(),
                                     title = taskInfo.title,
                                     leetCodeQuestions = taskInfo.leetCodeQuestions,
                                     systemDesignTopic = taskInfo.systemDesignTopic,
                                     communicationExercise = taskInfo.communicationExercise,
-                                    userName = mainVm.name.value
+                                    userName = name
                                 )
 
                                 Button(
                                     onClick = {
-                                        mainVm.onMainEvent(MainScreenEvent.OnTaskComplete)
+                                        if(currentDayIndexState > AppConstants.TASK_COUNT) onNavigate()
+                                        else mainVm.onMainEvent(MainScreenEvent.OnTaskComplete)
                                     },
                                     modifier = Modifier
                                         .padding(horizontal = 20.dp)
                                         .fillParentMaxWidth(0.85f)
                                         .clip(MaterialTheme.shapes.medium)
                                 ) {
-                                    Text(text = "Task completed")
+                                    Text(text = if(currentDayIndexState > AppConstants.TASK_COUNT) "Accomplishment Screen" else "Task completed")
                                 }
 
 

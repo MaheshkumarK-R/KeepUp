@@ -49,16 +49,21 @@ fun HyperLinkText(
         }
         leetCodeQuestions.forEach {
             val strings = it.split(": ")
-            Log.d(TAG, "HyperLinkText: $it\nsplit strings $strings")
-            val annotatedString = buildAnnotatedString(
-                textColour, "link", annotation = strings[1], content = strings[0]
-            )
-            ClickableText(text = annotatedString, onClick = { offset ->
-                annotatedString.getStringAnnotations(offset, offset).firstOrNull()?.let { span ->
-                    Log.d("_TAG", "MainContent: Clicked on ${span.item}")
-                    onClick(span.item)
-                }
-            }, modifier = Modifier.padding(horizontal = 25.dp))
+            Log.d(TAG, "HyperLinkText: ${strings.size}")
+            if(strings.size==1){
+                BulletText(content = strings[0])
+            }else{
+                Log.d(TAG, "HyperLinkText: $it\nsplit strings $strings")
+                val annotatedString = buildAnnotatedString(
+                    textColour, "link", annotation = strings[1], content = strings[0]
+                )
+                ClickableText(text = annotatedString, onClick = { offset ->
+                    annotatedString.getStringAnnotations(offset, offset).firstOrNull()?.let { span ->
+                        Log.d("_TAG", "MainContent: Clicked on ${span.item}")
+                        onClick(span.item)
+                    }
+                }, modifier = Modifier.padding(horizontal = 25.dp))
+            }
         }
     }
 }
